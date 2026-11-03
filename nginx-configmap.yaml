@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: calculadora-nginx
+  namespace: practice-3
+  labels:
+    app.kubernetes.io/name: calculadora-frontend
+data:
+  default.conf.template: |
+    server {
+      listen 80;
+      server_name _;
+      location / {
+        root /usr/share/nginx/html;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+      }
+      location /api/ {
+        proxy_pass http://${API_HOST}:${API_PORT};
+      }
+      location = /health {
+        proxy_pass http://${API_HOST}:${API_PORT}/health;
+      }

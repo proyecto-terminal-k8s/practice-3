@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calculadora-frontend
+  namespace: practice-3
+  labels:
+    app.kubernetes.io/name: calculadora-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: calculadora-frontend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: calculadora-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: your-registry/calculadora-frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+          env:
+            - name: API_HOST
+              value: calculadora-backend.practice-3.svc.cluster.local
+            - name: API_PORT
+              value: "8080"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/templates/default.conf.template
+              subPath: default.conf.template
+              readOnly: true
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: calculadora-nginx
