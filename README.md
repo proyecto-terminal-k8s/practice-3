@@ -12,15 +12,18 @@ mediante el nombre DNS estable `calculadora-backend`.
 - `nginx-deployment.yaml`: frontend de la calculadora montado con esa plantilla.
 - `nginx-service.yaml`: acceso interno al frontend.
 
-Construye y publica la imagen del frontend antes de aplicar los manifiestos; el
-registro usado en el comando debe coincidir con el marcador de la imagen YAML:
+Construye la imagen y cárgala en Minikube antes de aplicar los manifiestos:
 
 ```bash
 cd ../calculadora-frontend
-docker build -t tu-registro/calculadora-frontend:latest .
-docker push tu-registro/calculadora-frontend:latest
+docker build -t calculadora-frontend:latest .
+minikube image load calculadora-frontend:latest
 cd ../practice-3
 ```
+
+Para usar un registro externo, publica
+`tu-registro/calculadora-frontend:latest` y reemplaza esa imagen en
+`nginx-deployment.yaml`.
 
 ## Crear y probar
 

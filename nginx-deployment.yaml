@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: your-registry/calculadora-frontend:latest
+          image: calculadora-frontend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
