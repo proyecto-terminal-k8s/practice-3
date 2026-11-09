@@ -12,73 +12,93 @@ mediante el nombre DNS estable `calculadora-backend`.
 - `nginx-deployment.yaml`: frontend de la calculadora montado con esa plantilla.
 - `nginx-service.yaml`: acceso interno al frontend.
 
-Construye la imagen y cárgala en Minikube antes de aplicar los manifiestos:
+Para usar un registro externo, publica
+`tu-registro/calculadora-frontend:latest` y reemplaza esa imagen en
+`nginx-deployment.yaml`.
+
+## 1. Entrar al proyecto frontend
+
+Entra al directorio que contiene el frontend.
 
 ```bash
 cd ../calculadora-frontend
 ```
 
-Entra al proyecto que construye la imagen Nginx con el frontend.
+## 2. Construir la imagen
+
+Construye la imagen que montará la configuración desde el ConfigMap.
 
 ```bash
 docker build -t calculadora-frontend:latest .
 ```
 
-Construye la imagen que montará la configuración desde el ConfigMap.
+## 3. Cargar la imagen en Minikube
+
+Carga la imagen dentro de Minikube.
 
 ```bash
 minikube image load calculadora-frontend:latest
 ```
 
-Carga la imagen dentro de Minikube.
+## 4. Volver a los manifiestos
+
+Regresa al directorio de la práctica.
 
 ```bash
 cd ../practice-3
 ```
 
-Para usar un registro externo, publica
-`tu-registro/calculadora-frontend:latest` y reemplaza esa imagen en
-`nginx-deployment.yaml`.
+## 5. Crear el namespace
 
-## Crear y probar
+Crea el namespace aislado `practice-3`.
 
 ```bash
 kubectl apply -f namespace.yaml
 ```
 
-Crea el namespace aislado `practice-3`.
+## 6. Crear el ConfigMap
+
+Crea el ConfigMap con la plantilla de configuración de Nginx.
 
 ```bash
 kubectl apply -f nginx-configmap.yaml
 ```
 
-Crea el ConfigMap con la plantilla de configuración de Nginx.
+## 7. Crear el Deployment
+
+Crea el Deployment que monta la plantilla mediante el volumen configurado.
 
 ```bash
 kubectl apply -f nginx-deployment.yaml
 ```
 
-Crea el Deployment que monta la plantilla mediante el volumen configurado.
+## 8. Crear el Service
+
+Expone el frontend mediante un Service `ClusterIP`.
 
 ```bash
 kubectl apply -f nginx-service.yaml
 ```
 
-Expone el frontend mediante un Service `ClusterIP`.
+## 9. Esperar el despliegue
+
+Espera a que el Pod nuevo quede disponible.
 
 ```bash
 kubectl rollout status deployment/calculadora-frontend -n practice-3
 ```
 
-Espera a que el Pod nuevo quede disponible.
+## 10. Abrir el acceso local
+
+Mantén el proceso abierto y abre `http://localhost:8081`.
 
 ```bash
 kubectl port-forward service/calculadora-frontend 8081:80 -n practice-3
 ```
 
-Abre `http://localhost:8081`. Cambiar el ConfigMap no requiere reconstruir la imagen del frontend.
+## 11. Editar la configuración de Nginx
 
-Para comprobar una actualización real, añade esta línea dentro de `location /` del archivo `nginx-configmap.yaml`:
+Añade esta línea dentro de `location /` del archivo `nginx-configmap.yaml`. La cabecera permite verificar qué configuración está sirviendo Nginx.
 
 ```nginx
 add_header X-Config-Source practice-3 always;
@@ -93,31 +113,35 @@ location / {
 }
 ```
 
-La cabecera permite verificar desde el navegador o con `curl` cuál configuración está sirviendo Nginx.
+## 12. Aplicar la modificación
 
-Aplica la modificación guardada en el archivo:
+Actualiza el objeto ConfigMap en Kubernetes.
 
 ```bash
 kubectl apply -f nginx-configmap.yaml
 ```
 
-Actualiza el objeto ConfigMap en Kubernetes.
+## 13. Verificar el ConfigMap
+
+Comprueba que el ConfigMap existe y muestra sus metadatos.
 
 ```bash
 kubectl get configmap calculadora-nginx -n practice-3
 ```
 
-Comprueba que el ConfigMap existe y muestra sus metadatos.
-
 Como el archivo se monta mediante `subPath`, los Pods existentes no reciben automáticamente el contenido actualizado:
+
+## 14. Reiniciar el Deployment
+
+Recrea los Pods para montar la nueva versión del ConfigMap.
 
 ```bash
 kubectl rollout restart deployment/calculadora-frontend -n practice-3
 ```
 
-Recrea los Pods para montar la nueva versión del ConfigMap.
+## 15. Verificar la cabecera
 
-En otra terminal, verifica la cabecera añadida:
+En otra terminal, solicita la página y verifica la cabecera añadida.
 
 ```bash
 curl -I http://localhost:8081
@@ -125,7 +149,17 @@ curl -I http://localhost:8081
 
 Debe aparecer `X-Config-Source: practice-3`.
 
-## Limpieza
+## 16. Limpiar la práctica
+
+Elimina el namespace y todos los recursos asociados.
+
+```bash
+kubectl delete namespace practice-3
+```
+
+## 16. Limpiar la práctica
+
+Elimina el namespace y todos los recursos asociados.
 
 ```bash
 kubectl delete namespace practice-3
